@@ -2,7 +2,7 @@ package com.github.fortega.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 
-case class CompletitionRequest(
+case class CompletionRequest(
     prompt: String,
     model: String = "text-davinci-003",
     suffix: Option[String] = None,

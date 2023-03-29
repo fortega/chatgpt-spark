@@ -1,17 +1,28 @@
 package com.github.fortega
 
 import com.github.fortega.service.SparkService._
+import org.apache.spark.sql.functions.trim
 
 object App {
+  lazy val completions = createCompletionUdf(apiKey = sys.env("API_KEY"))
 
-  private def main(cmdArgs: Array[String]): Unit = usingSpark { spark =>
+  def main(cmdArgs: Array[String]): Unit = usingSpark { spark =>
     import spark.implicits._
 
-    val completitions = createCompletitionsUdf(apiKey = sys.env("API_KEY"))
-    val input = List("scala", "java", "python")
-      .map(lang => s"the cool stuff about $lang language is")
-      .toDF("input")
-    input.withColumn("response", completitions($"input")).show(false)
-  }
+    val questions = Seq(
+      "could scala app ask some questions to chatgpt?",
+      "tell me something cool about scala",
+      "why is better to use scala with spark than pyspark?"
+    ).toDF("question")
 
+    val output =
+      questions.withColumn("completion", completions($"question"))
+    output.printSchema
+    output
+      .select(
+        $"question",
+        trim($"completion.value.choices.text" (0)) as "completition"
+      )
+      .show(false)
+  }
 }
