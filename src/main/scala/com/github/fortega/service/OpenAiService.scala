@@ -12,36 +12,33 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.Duration
 import scala.util.Try
 import scala.reflect.ClassTag
+import org.apache.avro.data.Json
+import com.fasterxml.jackson.module.scala.DefaultScalaModule
 
 object OpenAiService {
-
+  private lazy val om = JsonMapper.builder.addModule(DefaultScalaModule).build
+  private lazy val http = Gigahorse.http(Gigahorse.config)
   def completion(
       request: CompletionRequest,
       apiKey: String
-  )(implicit
-      om: JsonMapper,
-      http: HttpClient
-  ) =
-    execute[CompletionResponse](
-      Gigahorse
-        .url("https://api.openai.com/v1/completions")
-        .addHeader(HeaderNames.CONTENT_TYPE -> "application/json")
-        .addHeader(HeaderNames.AUTHORIZATION -> s"Bearer $apiKey")
-        .post(om.writeValueAsString(request))
-    )
+  ) = execute[CompletionResponse](
+    Gigahorse
+      .url("https://api.openai.com/v1/completions")
+      .addHeaders(
+        HeaderNames.CONTENT_TYPE -> "application/json",
+        HeaderNames.AUTHORIZATION -> s"Bearer $apiKey"
+      )
+      .post(body = om.writeValueAsString(request))
+  )
 
   private def execute[A](
       request: Request
-  )(implicit
-      om: JsonMapper,
-      http: HttpClient,
-      tag: ClassTag[A]
-  ) = {
+  )(implicit tag: ClassTag[A]) = {
     val valueType = tag.runtimeClass.asInstanceOf[Class[A]]
-    val converter = om.readValue(_: String, valueType)
+    val fromJson: String => A = om.readValue(_, valueType)
     http.processFull(
       request,
-      Gigahorse.asString andThen converter
+      Gigahorse.asString andThen fromJson
     )
   }
 }
