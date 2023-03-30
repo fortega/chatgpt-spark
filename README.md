@@ -1,5 +1,9 @@
 # ChatGPT Completion using Apache Spark
 
+## In action
+
+https://asciinema.org/a/ivJZlhEylqYChMSexHOMMuPgL
+
 ## How to run
 
 ### Create jar
