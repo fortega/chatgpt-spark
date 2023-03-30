@@ -1,4 +1,4 @@
-name := "chargpt-bigdata"
+name := "chargpt-spark"
 organization := "com.github.fortega"
 version := "0.0.1"
 
