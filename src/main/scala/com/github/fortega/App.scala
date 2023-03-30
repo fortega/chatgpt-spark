@@ -5,12 +5,13 @@ import org.apache.spark.sql.functions.element_at
 
 object App {
   def run(
+      apiKey: String,
       inputPath: String,
       outputPath: String
   ) = usingSpark { spark =>
     import spark.implicits._
 
-    val completionUdf = createCompletionUdf(apiKey = sys.env("API_KEY"))
+    val completionUdf = createCompletionUdf(apiKey)
 
     val input = spark.read
       .csv(inputPath)
@@ -25,7 +26,6 @@ object App {
         element_at($"completion.value.choices.text", 1)
       )
       .write
-      .option("sep", ":\n")
       .csv(outputPath)
     spark.stop
     sys.exit
@@ -34,6 +34,6 @@ object App {
   def main(
       cmdArgs: Array[String]
   ): Unit = cmdArgs match {
-    case Array(in, out) => run(in, out)
+    case Array(apiKey, in, out) => run(apiKey, in, out)
   }
 }
